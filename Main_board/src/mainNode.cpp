@@ -13,11 +13,17 @@ LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 #define START_CHAR '<'
 #define DIAMETER '%'
 
+#define MAX_PWM 255
+#define MIN_PWM 0
+
 float Temperature;
 float Humidity;
 
 char incomingByteChar;
 String incomingNumberAsStr;
+
+void show_message(int x, int y, String message);
+void make_decision_4_irrigation();
 
 void setup()
 {
@@ -36,9 +42,6 @@ void setup()
 
 void loop()
 {
-
-  //analogWrite(CLOCKWISE, 255);
-  //digitalWrite(ANTI_CLOCKWISE, 0);
   if (Serial.available() > 0)
   {
     while (Serial.available())
@@ -51,60 +54,57 @@ void loop()
       else if (incomingByteChar == END_CHAR)
       {
         Temperature = incomingNumberAsStr.toFloat();
-        lcd.setCursor(0, 0);
-        lcd.print("Temperature: " + String(Temperature));
+        show_message(0, 1, "Temperature: " + String(Temperature));
         incomingNumberAsStr = "";
         break;
       }
       else if (incomingByteChar == DIAMETER)
       {
         Humidity = incomingNumberAsStr.toFloat();
-        lcd.setCursor(0, 1);
-        lcd.print("Humidity: " + String(Humidity));
+        show_message(0, 0, "Humidity: " + String(Humidity));
         incomingNumberAsStr = "";
       }
       else
         incomingNumberAsStr += incomingByteChar;
 
-      delay(1);
+      delay(3);
     }
 
-    if (Humidity > 50)
+    make_decision_4_irrigation();
+  }
+}
+
+void show_message(int x, int y, String message) {
+  lcd.setCursor(x, y);
+  lcd.print(message);
+}
+
+void make_decision_4_irrigation() {
+  if (Humidity > 50)
     {
-      digitalWrite(CLOCKWISE, 0);
+      digitalWrite(CLOCKWISE, MIN_PWM);
       digitalWrite(ANTI_CLOCKWISE, 0);
 
-      lcd.setCursor(0, 2);
-      lcd.print("Motor Off        ");
+      show_message(0, 2, "Motor Stat: Off");
     }
     else if (Humidity < 20)
     {
-      analogWrite(CLOCKWISE, 63);
-      lcd.setCursor(0, 2);
-      lcd.print("Motor Speed: 25%");
+      analogWrite(CLOCKWISE, MAX_PWM/4);
+      show_message(0, 2, "Motor Stat: 25%");
     }
     else
     {
       if (Temperature < 25)
       {
-        digitalWrite(CLOCKWISE, 0);
-        lcd.setCursor(0, 2);
-        lcd.print("Motor Off        ");
+        digitalWrite(CLOCKWISE, MIN_PWM);
+        show_message(0, 2, "Motor Stat: Off");
       }
       else
       {
-        analogWrite(CLOCKWISE, 26);
-        lcd.setCursor(0, 2);
-        lcd.print("Motor Speed: 10%");
+        analogWrite(CLOCKWISE, MAX_PWM/10);
+        show_message(0, 2, "Motor Stat: 10%");
       }
-
       Serial.end();
       Serial.begin(9600);
     }
-  }
-
-  // set first clumn first row
-  // lcd.setCursor(0, 0);
-  // // print the number of seconds since reset:
-  // lcd.print("test lcd");
 }
