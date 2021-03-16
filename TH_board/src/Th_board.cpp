@@ -9,25 +9,32 @@
 #define START_CHAR '<'
 #define DIAMETER '%'
 
+unsigned long maxUnsignedLong = 1;
+
 void I2CTransmision(int mode);
 float ReadHumidityData();
 float ReadTemperatureData();
+bool ShouldBroadcast();
+void Broadcast(float humidity , float temperature );
 
+unsigned long lastBroadcastTime;
 float Humidity, Temperature;
 void setup()
 {
-
+  maxUnsignedLong =(maxUnsignedLong << 31) - 1;
+  lastBroadcastTime = 0;
   Wire.begin(9600);
   Serial.begin(9600);
 
-  delay(300);
+ 
 }
 
 void loop()
 {
 
+
   I2CTransmision(HUMIDITY_MEASURE);
-  delay(500);
+  delay(100);
 
   Wire.requestFrom(SHT25_I2C_ADDR, 2);
 
@@ -37,7 +44,7 @@ void loop()
   }
 
   I2CTransmision(TEMPERATURE_MEASURE);
-  delay(500);
+  delay(100);
 
   Wire.requestFrom(SHT25_I2C_ADDR, 2);
 
@@ -45,12 +52,17 @@ void loop()
   {
     Temperature = ReadTemperatureData();
   }
-  Serial.print(START_CHAR);
-  Serial.print(Humidity);
-  Serial.print(DIAMETER);
-  Serial.print(Temperature);
-  Serial.println(END_CHAR);
-  delay(4000);
+
+
+  bool shouldBroadcast = ShouldBroadcast();
+
+  if (shouldBroadcast)
+  {
+    Broadcast(Humidity , Temperature);
+    lastBroadcastTime = millis();
+  }
+
+
 }
 
 void I2CTransmision(int mode)
@@ -83,4 +95,18 @@ float ReadTemperatureData()
   // float fTemp = (cTemp * 1.8) + 32;
   // Output data to Serial Monitor
   return cTemp;
+}
+
+bool ShouldBroadcast(){
+  return ((millis() % maxUnsignedLong) - (lastBroadcastTime % maxUnsignedLong)) > 5000;
+  
+
+}
+void Broadcast(float humidity , float temperature ){
+
+  Serial.print(START_CHAR);
+  Serial.print(humidity);
+  Serial.print(DIAMETER);
+  Serial.print(temperature);
+  Serial.println(END_CHAR);
 }
