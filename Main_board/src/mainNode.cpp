@@ -33,6 +33,8 @@ void setup()
 
   pinMode(ANTI_CLOCKWISE, OUTPUT);
   pinMode(CLOCKWISE, OUTPUT);
+  digitalWrite(ANTI_CLOCKWISE, 0);
+
 
   Temperature = 0;
   Humidity = 0;
@@ -52,18 +54,18 @@ void loop()
       if (incomingByteChar == START_CHAR)
         incomingNumberAsStr = "";
 
-      else if (incomingByteChar == END_CHAR)
-      {
-        Temperature = incomingNumberAsStr.toFloat();
-        show_message(0, 1, "Temperature: " + String(Temperature));
-        incomingNumberAsStr = "";
-        break;
-      }
       else if (incomingByteChar == DIAMETER)
       {
         Humidity = incomingNumberAsStr.toFloat();
-        show_message(0, 0, "Humidity: " + String(Humidity));
+        show_message(0, 0, "Humidity: " + incomingNumberAsStr);
         incomingNumberAsStr = "";
+      }
+      else if (incomingByteChar == END_CHAR)
+      {
+        Temperature = incomingNumberAsStr.toFloat();
+        show_message(0, 1, "Temperature: " + incomingNumberAsStr);
+        incomingNumberAsStr = "";
+        break;
       }
       else
         incomingNumberAsStr += incomingByteChar;
@@ -86,8 +88,8 @@ void make_decision_4_irrigation()
 {
   if (Humidity > 50)
   {
-    digitalWrite(CLOCKWISE, MIN_PWM);
-    digitalWrite(ANTI_CLOCKWISE, 0);
+    analogWrite(CLOCKWISE, MIN_PWM);
+   
 
     show_message(0, 2, "Motor Stat: Off");
   }
@@ -100,7 +102,7 @@ void make_decision_4_irrigation()
   {
     if (Temperature < 25)
     {
-      digitalWrite(CLOCKWISE, MIN_PWM);
+      analogWrite(CLOCKWISE, MIN_PWM);
       show_message(0, 2, "Motor Stat: Off");
     }
     else
