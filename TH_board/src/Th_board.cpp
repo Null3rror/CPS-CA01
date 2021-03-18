@@ -59,7 +59,7 @@ void loop()
   if (shouldBroadcast)
   {
     Broadcast(Humidity , Temperature);
-    lastBroadcastTime = millis();
+    lastBroadcastTime = millis() - millis() %1000;
   }
 
 
