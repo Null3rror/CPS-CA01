@@ -24,6 +24,7 @@ String incomingNumberAsStr;
 
 void show_message(int x, int y, String message);
 void make_decision_4_irrigation();
+void reestablish_serial_connection();
 
 void setup()
 {
@@ -71,40 +72,47 @@ void loop()
     }
 
     make_decision_4_irrigation();
+    reestablish_serial_connection();
   }
 }
 
-void show_message(int x, int y, String message) {
+void show_message(int x, int y, String message)
+{
   lcd.setCursor(x, y);
   lcd.print(message);
 }
 
-void make_decision_4_irrigation() {
+void make_decision_4_irrigation()
+{
   if (Humidity > 50)
+  {
+    digitalWrite(CLOCKWISE, MIN_PWM);
+    digitalWrite(ANTI_CLOCKWISE, 0);
+
+    show_message(0, 2, "Motor Stat: Off");
+  }
+  else if (Humidity < 20)
+  {
+    analogWrite(CLOCKWISE, MAX_PWM / 4);
+    show_message(0, 2, "Motor Stat: 25%");
+  }
+  else
+  {
+    if (Temperature < 25)
     {
       digitalWrite(CLOCKWISE, MIN_PWM);
-      digitalWrite(ANTI_CLOCKWISE, 0);
-
       show_message(0, 2, "Motor Stat: Off");
-    }
-    else if (Humidity < 20)
-    {
-      analogWrite(CLOCKWISE, MAX_PWM/4);
-      show_message(0, 2, "Motor Stat: 25%");
     }
     else
     {
-      if (Temperature < 25)
-      {
-        digitalWrite(CLOCKWISE, MIN_PWM);
-        show_message(0, 2, "Motor Stat: Off");
-      }
-      else
-      {
-        analogWrite(CLOCKWISE, MAX_PWM/10);
-        show_message(0, 2, "Motor Stat: 10%");
-      }
-      Serial.end();
-      Serial.begin(9600);
+      analogWrite(CLOCKWISE, MAX_PWM / 10);
+      show_message(0, 2, "Motor Stat: 10%");
     }
+  }
+}
+
+void reestablish_serial_connection()
+{
+  Serial.end();
+  Serial.begin(9600);
 }
